@@ -1,0 +1,38 @@
+[project]
+name = "aanalyticsext"
+version = "0.1.0"
+description = "Adobe Analytics 2.0 API bulk extraction engine"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+keywords = ["adobe-analytics", "analytics", "etl", "extraction"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Database",
+]
+dependencies = [
+    # 라이브러리라서 정확한 버전을 못 박지 않는다. 사내 검증 환경은
+    # sqlalchemy 1.4.39 / pandas 2.1.4 이며, 그 범위 안에서 테스트했다.
+    "sqlalchemy>=1.4,<2.0",
+    "pandas>=2.0,<3.0",
+    "aanalytics2",
+]
+
+[project.optional-dependencies]
+mysql = ["pymysql"]
+
+[project.urls]
+Homepage = "https://github.com/Glory-Cho/aanalyticsext"
+Repository = "https://github.com/Glory-Cho/aanalyticsext"
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+[tool.pdm]
+distribution = true
+
+[tool.pdm.build]
+includes = ["aanalyticsext"]
