@@ -83,20 +83,59 @@ export ACT_DB_URL='mysql+pymysql://user:pass@host:3306/db?charset=utf8mb4'
 export ACT_COMPANY_ID=myorg0
 ```
 
+## 완결성 검증 — 받은 걸 다시 받지 않고 확인하기
+
+"다 받았는가"를 확인하려고 데이터를 다시 내려받을 필요는 없다.
+
+```python
+from aanalyticsext import SQLValidator, find_missing, plan_refill
+
+missing = find_missing(tasks, SQLValidator(engine), "2026-07-01", "2026-07-31")
+refill  = plan_refill(missing)      # 누락 날짜를 연속 구간으로 묶은 최소 task
+```
+
+1. 기대 조합은 **실행 계획에서 계산한다** — DB 접근 0회
+2. 실제 조합은 테이블당 `SELECT DISTINCT` **한 번**으로 키만 받는다 (수 KB)
+3. 집합 차집합이 누락. 흩어진 날짜는 연속 구간으로 압축해 task 수를 최소화한다
+
+조합이 수백만 개여도 내려받는 건 키 목록뿐이라, 비용이 조합 수가 아니라 테이블
+수에 비례한다. 키 차원은 `(site, division, category, date)`가 기본이고
+`dimensions=` 로 바꿀 수 있다.
+
+노트북에서 표로 보려면:
+
+```python
+from aanalyticsext import GapChecker
+
+gc = GapChecker(planner, engine)
+gc.scan("2026-08-01", "2026-08-18", "tb_prefix_")
+gc.by_site()      # 사이트별 누락 일수와 구간
+gc.by_date()      # 날짜별 누락 사이트 수 — 특정 시각에 몰리면 장애/토큰만료
+gc.backfill()     # 누락분만 재추출
+```
+
+주의: 누락이 곧 오류는 아니다. 해당 국가에서 취급하지 않는 품목처럼 정당하게
+0 row인 조합이 있다. 재추출 횟수를 제한하고, 끝까지 비는 조합은 고치려 들지
+말고 리포트로 남기는 편이 낫다.
+
 ## 구성
 
 ```
 aanalyticsext/
-├── profile.py      # 조직 데이터 주입 (Profile, load_profile)
-├── actRunner.py    # 언제/어디를 — 기간·시각 경계, site_code 확장, 적재 컬럼
-├── actModuler.py   # 어떻게 — 요청 조립, 한도/재시도, 응답 정규화, DB 적재
-└── actExecute.py   # 공개 API — retrieve_* 함수들
+├── profile.py       # 조직 데이터 주입 (Profile, load_profile)
+├── actRunner.py     # 언제/어디를 — 기간·시각 경계, site_code 확장, 적재 컬럼
+├── actModuler.py    # 어떻게 — 요청 조립, 한도/재시도, 응답 정규화, DB 적재
+├── actExecute.py    # 공개 API — retrieve_* 함수들
+├── validator.py     # 완결성 검증 — 기대 조합 vs 실제 조합 차집합
+├── gaps.py          # 누락 진단 — 위 결과를 DataFrame으로
+└── rate_limiter.py  # 클라이언트측 토큰버킷 — 429를 아예 만들지 않는다
 ```
 
 ## 테스트
 
 ```bash
-PYTHONPATH="tests:." python tests/test_engine.py
+PYTHONPATH="tests:." python tests/test_engine.py      # 수집 엔진 20개 섹션
+PYTHONPATH="tests:." python tests/test_validator.py   # 완결성 검증 / 한도 제어
 ```
 
 모의 Adobe API + SQLite로 돌아간다. 실제 자격증명이 필요 없고,

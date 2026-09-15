@@ -15,3 +15,11 @@ from .profile import Profile, SiteCodeRule, load_profile, current_profile, clear
 from .actExecute import *
 from .actModuler import *
 from .actRunner import *
+
+# 완결성 검증 / 누락 진단 / 호출 한도 제어.
+# pandas·sqlalchemy 위에서만 도는 부수 기능이라 엔진 본체와 독립적이다.
+from .validator import (SQLValidator, build_expected, find_missing, plan_refill,
+                        missing_report, group_contiguous, daterange, site_key,
+                        DEFAULT_DIMENSIONS)
+from .gaps import GapChecker
+from .rate_limiter import limiter, rate_limited, TokenBucket, suggest_parallel
