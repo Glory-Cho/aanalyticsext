@@ -804,6 +804,25 @@ def checkSiteCode(dimension):
 # DB
 # ---------------------------------------------------------------------------
 
+def _checkDbStack():
+    """pandas / SQLAlchemy 조합이 서로 맞는지 본다.
+
+    pandas 2.2부터 to_sql 이 SQLAlchemy 2.0 을 요구한다. 1.4 와 섞이면
+    "'Connection' object has no attribute 'cursor'" 라는 엉뚱한 오류가 나는데,
+    원인을 짐작하기 어려워서 미리 잡아준다.
+    메타데이터로는 두 패키지 사이의 조건부 제약을 표현할 수 없다.
+    """
+    def _ver(mod):
+        return tuple(int(x) for x in mod.__version__.split(".")[:2]
+                     if x.isdigit())
+    import sqlalchemy
+    if _ver(pd) >= (2, 2) and _ver(sqlalchemy) < (2, 0):
+        raise RuntimeError(
+            f"pandas {pd.__version__} 는 SQLAlchemy 2.0 이상이 필요합니다 "
+            f"(현재 {sqlalchemy.__version__}). "
+            "SQLAlchemy를 올리거나 pandas를 2.1.x로 내리세요.")
+
+
 def _db_url():
     """[수정] 접속 정보를 환경변수에서 읽는다.
 
@@ -830,6 +849,7 @@ def get_db_engine(pool_size=None, max_overflow=2):
     워커 3개가 항상 커넥션을 기다리다 QueuePool 타임아웃으로 실패했다.
     그 예외조차 "Error occurred."로만 보였다.
     """
+    _checkDbStack()
     global _db_engine
     if _db_engine is None:
         with _engine_lock:

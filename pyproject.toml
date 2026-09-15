@@ -13,10 +13,12 @@ classifiers = [
     "Topic :: Database",
 ]
 dependencies = [
-    # 라이브러리라서 정확한 버전을 못 박지 않는다. 사내 검증 환경은
-    # sqlalchemy 1.4.39 / pandas 2.1.4 이며, 그 범위 안에서 테스트했다.
-    "sqlalchemy>=1.4,<2.0",
-    "pandas>=2.0,<3.0",
+    # SQLAlchemy 1.4 / 2.0 두 레인 모두 테스트 통과.
+    # 단 pandas 2.2+ 는 SQLAlchemy 2.0+ 를 요구한다 — 이 조합은 메타데이터로
+    # 표현할 수 없어서 런타임에서 검사한다(actModuler._checkDbStack).
+    # 상한을 두지 않으면 pip가 둘 다 최신(2.0 + 2.3)으로 잡아 정상 조합이 된다.
+    "sqlalchemy>=1.4.36",
+    "pandas>=2.0",
     "aanalytics2",
 ]
 
