@@ -67,6 +67,10 @@ SITE_CODE_DIMENSION_RSIDS = ()
 # Adobe 인증 설정 파일(JSON) 경로. 환경변수 AA_AUTH_CONFIG로도 지정할 수 있다.
 AUTH_CONFIG_PATH = ""
 
+# DB 접속 URL. 엔진은 기본값을 두지 않는다 — 공개 패키지에 접속 정보가 있으면
+# 배포가 곧 자격증명 배포가 된다. 프로파일이나 환경변수로 받는다.
+DB_URL = ""
+
 
 def _site_code_of(rsid):
     """rsid -> site_code. 프로파일이 주입되면 교체된다."""
@@ -829,10 +833,12 @@ def _db_url():
     접속 정보가 소스에 박혀 있으면 패키지 배포가 곧 자격증명 배포가 된다.
     그래서 기본값을 두지 않고 ACT_DB_URL에서만 읽는다.
     """
-    url = os.environ.get("ACT_DB_URL", "")
+    # 환경변수가 항상 우선한다. 운영에서 프로파일 값을 덮어쓸 수 있어야 한다.
+    url = os.environ.get("ACT_DB_URL", "") or DB_URL
     if not url:
         raise RuntimeError(
-            "DB 접속 정보가 없습니다. 환경변수 ACT_DB_URL을 설정하세요. "
+            "DB 접속 정보가 없습니다. 환경변수 ACT_DB_URL을 설정하거나 "
+            "프로파일의 db_url에 넣으세요. "
             "예: mysql+pymysql://<user>:<password>@<host>:<port>/<db>?charset=utf8mb4")
     return url
 

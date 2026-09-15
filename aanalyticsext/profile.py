@@ -95,6 +95,10 @@ class Profile:
     # Adobe 인증 설정 파일(JSON) 경로
     auth_config_path: str = ""
 
+    # DB 접속 URL. 환경변수 ACT_DB_URL이 있으면 그쪽이 우선한다.
+    # 공개 저장소에 두는 프로파일이라면 여기 실제 접속 정보를 넣지 말 것.
+    db_url: str = ""
+
     # rsid -> site_code 예외. 규칙으로 안 풀리는 것만 직접 적는다.
     site_code_overrides: dict = field(default_factory=dict)
 
@@ -199,6 +203,8 @@ def _apply(prof):
         M.COMPANY_ID = prof.company_id
     if prof.auth_config_path:
         M.AUTH_CONFIG_PATH = prof.auth_config_path
+    if prof.db_url:
+        M.DB_URL = prof.db_url
 
     # 필터 목록은 임포트 시점에 한 번 계산돼 있으므로 다시 만든다.
     # DEPRECATED_SITE_CODES를 참조하므로 그룹 주입 뒤에 와야 한다.
